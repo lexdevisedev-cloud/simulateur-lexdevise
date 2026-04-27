@@ -10,7 +10,19 @@ const app = express();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.use(express.json());
-app.use(express.static(__dirname));
+
+// fichiers statiques
+app.get("/style.css", (_req, res) => {
+  res.sendFile(path.join(__dirname, "style.css"));
+});
+
+app.get("/script.js", (_req, res) => {
+  res.sendFile(path.join(__dirname, "script.js"));
+});
+
+app.get("/rates.js", (_req, res) => {
+  res.sendFile(path.join(__dirname, "rates.js"));
+});
 
 app.post("/api/send-estimation", async (req, res) => {
   try {
@@ -23,10 +35,6 @@ app.post("/api/send-estimation", async (req, res) => {
       duration,
       estimationRange
     } = req.body;
-
-    if (!fullName || !email || !phone || !startDate || !loanAmount || !duration || !estimationRange) {
-      return res.status(400).json({ error: "Informations incomplètes." });
-    }
 
     const { data, error } = await resend.emails.send({
       from: "LexDevise <onboarding@resend.dev>",
@@ -46,13 +54,11 @@ app.post("/api/send-estimation", async (req, res) => {
     });
 
     if (error) {
-      console.error(error);
       return res.status(500).json({ error: "Erreur Resend." });
     }
 
     return res.json({ ok: true, data });
   } catch (err) {
-    console.error(err);
     return res.status(500).json({ error: "Erreur serveur." });
   }
 });
@@ -62,6 +68,7 @@ app.get("*", (_req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
   console.log(`Serveur lancé sur http://localhost:${PORT}`);
 });
